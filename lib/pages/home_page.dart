@@ -13,28 +13,30 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
-  
+  int page = 1;
+  List<Map> hotGoodsList =[];
+
   @override
     void initState() {
-      // TODO: implement initState
       super.initState();
+      _getHotGoods();
       print('首页');
     }
   // 保持页面状态
   @override
   bool get wantKeepAlive => true;
 
-  
-
   String homePageContent = '正在获取数据....';
 
   @override
   Widget build(BuildContext context) {
+
+    var formData = {'lon':'113.890427','lat':'22.560033'};
     return Scaffold(
       appBar: AppBar(title: Text('百姓生活+')),
       //  FutureBuilder 异步加载数据后刷新页面
       body:FutureBuilder(
-        future: getHomePageContent(),
+        future: request('homePageContent',parameters:formData),
         builder: (context,snapshort){
           if(snapshort.hasData){
             var data = json.decode(snapshort.data.toString());
@@ -73,7 +75,7 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
                   
                   FloorTitle(picture_address:floor3Title),
                   FloorContent(floorGoodsList:floor3),
-                  
+                  _hotGoods(),
                 ],
               ),
             );
@@ -84,6 +86,81 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
           }
         }
       )
+    );
+  }
+
+  // 获取热销商品数据
+  void _getHotGoods(){
+    var formPage = {'page':page};
+    request('homePageBelowContent',parameters: formPage).then((val){
+      var data = json.decode(val.data.toString());
+      List<Map> newGoodsList = (data['data'] as List).cast();
+      setState(() {
+        // 添加
+        hotGoodsList.addAll(newGoodsList);
+        page++;
+      });
+    });   
+  }
+  Widget hotTitle = Container(
+    margin: EdgeInsets.only(top: 10.0),
+    alignment: Alignment.center,
+    color: Colors.transparent,
+    padding: EdgeInsets.all(5.0),
+    child: Text('火爆专区'),
+  );
+
+  Widget _wrapList(){
+    if(hotGoodsList.length!=0){
+      List<Widget> listWidget = hotGoodsList.map((val){
+        return InkWell(
+          onTap: (){},
+          child: Container(
+            width: ScreenUtil().setWidth(372),
+            color: Colors.white,
+            padding: EdgeInsets.all(5.0),
+            margin: EdgeInsets.only(bottom: 3.0),
+            child: Column(
+              children: <Widget>[
+                Image.network(val['image'],width: ScreenUtil().setWidth(370),),
+                Text(
+                  val['name'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,//超出省略号,
+                  style: TextStyle(color: Colors.pink,fontSize: ScreenUtil().setSp(26)),
+                ),
+                Row(
+                  children: <Widget>[
+                    Text('¥${val['mallPrice']}'),
+                    Text(
+                      '¥${val['price']}',
+                      style: TextStyle(color: Colors.black26,decoration: TextDecoration.lineThrough ),
+                      )
+                  ],
+                )
+                           ],
+            ),
+          ),
+        );
+      }).toList();
+
+      return Wrap(
+        spacing: 2, // 列,2列
+        children: listWidget,
+      );
+
+    }else{
+      return Text('123');
+    }
+  }
+  Widget _hotGoods(){
+    return Container(
+      child: Column(
+        children: <Widget>[
+          hotTitle,
+          _wrapList(),
+        ],
+      ),
     );
   }
 }
@@ -338,3 +415,8 @@ class FloorContent extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
