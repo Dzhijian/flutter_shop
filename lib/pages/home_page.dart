@@ -5,6 +5,7 @@ import 'dart:convert';
 // 屏幕适配
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_easyrefresh/easy_refresh.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -19,7 +20,7 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
   @override
     void initState() {
       super.initState();
-      _getHotGoods();
+      // _getHotGoods();
       print('首页');
     }
   // 保持页面状态
@@ -58,15 +59,15 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
             List<Map> floor2  = (data['data']['floor2'] as List).cast();
             List<Map> floor3  = (data['data']['floor3'] as List).cast();
 
-            return SingleChildScrollView(
-              child: Column(
+            return EasyRefresh(
+              child: ListView(
                 children: <Widget>[
                   SwiperDiy(swiperDataList: swiperList),
                   TopNavigator(navigatorList: navigatorList),
                   AdBanner(adPicture:adPicture),
                   LeaderPhone(leaderImage: leaderImage,leaderPhone: leaderPhone),
                   Recommend(recommendList:recommendList),
-                  
+
                   FloorTitle(picture_address:floor1Title),
                   FloorContent(floorGoodsList:floor1),
 
@@ -78,10 +79,25 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
                   _hotGoods(),
                 ],
               ),
+              onLoad: ()async{
+                print('开始加载更多......');
+                var formPage = {'page':page};
+                await request('homePageBelowContent',parameters: formPage).then((val){
+                  var data = json.decode(val.data.toString());
+                  List<Map> newGoodsList = (data['data'] as List).cast();
+                  setState(() {
+                    // 添加
+                    hotGoodsList.addAll(newGoodsList);
+                    page++;
+                  });
+                });
+              },
             );
+            
           }else{
             return Center(
               child: Text('没有数据'),
+
             );
           }
         }
@@ -217,6 +233,7 @@ class TopNavigator extends StatelessWidget {
       height: ScreenUtil().setHeight(320),
       padding: EdgeInsets.all(3.0),
       child: GridView.count(
+        physics: NeverScrollableScrollPhysics(),
         crossAxisCount: 5,
         padding: EdgeInsets.all(5.0),
         children: navigatorList.map((item){
