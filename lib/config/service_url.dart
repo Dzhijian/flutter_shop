@@ -24,5 +24,7 @@ const servicePath = {
 'homePageContent':serviceUrl+'/baixing/bxAppIndex/getHomePageContent',//商店首页信息
 'homePageBelowContent':serviceUrl+'/baixing/bxAppIndex/getHomePageBelowConten',//商店首页火爆专区
 'getCategory':serviceUrl+'/baixing/bxAppIndex/getCategory',//分类页面
+'getMallGoods':serviceUrl+'/baixing/bxAppIndex/getMallGoods',// 商品分类的商品列表
+
 
 } ; 

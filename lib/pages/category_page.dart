@@ -3,6 +3,10 @@ import '../service/service_method.dart';
 import 'dart:convert';
 import '../model/category.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import '../provider/child_category.dart';
+import '../model/category.dart';
+
 
 class CategoryPage extends StatefulWidget {
   @override
@@ -18,7 +22,13 @@ class _CategoryPageState extends State<CategoryPage> {
       body: Container(
         child: Row(
           children: <Widget>[
-            LeftCategoryNav()
+            LeftCategoryNav(),
+            Column(
+              children: <Widget>[
+                RightCategoryNav(),
+                CategoryGoodsList()
+              ],
+            )
           ],
         ),
       ),
@@ -35,6 +45,8 @@ class LeftCategoryNav extends StatefulWidget {
 
 class _LeftCategoryNavState extends State<LeftCategoryNav> {
   List list = [];
+  var listIndex = 0;
+
   @override
     void initState() {
       _getCategory();
@@ -59,13 +71,21 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
   }
 
   Widget _leftInkWell(int index){
+    bool isClick = false;
+    isClick = (index == listIndex) ? true : false;
     return InkWell(
-      onTap: (){},
+      onTap: (){
+        setState(() {
+                  listIndex = index;
+                });
+        var childList = list[index].bxMallSubDto;
+        Provider.of<ChildCategory>(context).getChildCategory(childList);
+      },
       child: Container(
         height: ScreenUtil().setHeight(100),
         padding: EdgeInsets.only(left: 10,top:20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isClick ? Color.fromRGBO(236, 236, 236, 1.0) : Colors.white,
           border: Border(
             bottom: BorderSide(width: 1,color: Colors.black12)
           ),
@@ -82,7 +102,86 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
       setState(() {
               list = category.data;
             });
-      // list.data.forEach((item)=>print(item.mallCategoryName));
+      Provider.of<ChildCategory>(context).getChildCategory(list[0].bxMallSubDto);      
     });
+  }
+}
+
+class RightCategoryNav extends StatefulWidget {
+  @override
+  _RightCategoryNavState createState() => _RightCategoryNavState();
+}
+
+class _RightCategoryNavState extends State<RightCategoryNav> {
+  
+  @override
+  Widget build(BuildContext context) {
+    
+    ChildCategory childCategory = Provider.of<ChildCategory>(context);
+    return Container(
+      height: ScreenUtil().setHeight(80),
+      width: ScreenUtil().setWidth(570),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(width: 1,color: Colors.black12)
+        )
+      ),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: childCategory.childCategoryList.length,
+        itemBuilder: (context,index){
+          return _rightInkWell(childCategory.childCategoryList[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _rightInkWell(BxMallSubDto item){
+
+    return InkWell(
+      onTap: (){},
+
+      child: Container(
+        padding: EdgeInsets.fromLTRB(5.0, 10.0, 5.0, 10.0),
+        child: Text(
+          item.mallSubName,
+          style: TextStyle(fontSize: ScreenUtil().setSp(28)),
+        ),
+      ),
+    );
+  }
+}
+
+//商品列表
+class CategoryGoodsList extends StatefulWidget {
+  @override
+  _CategoryGoodsListState createState() => _CategoryGoodsListState();
+}
+
+class _CategoryGoodsListState extends State<CategoryGoodsList> {
+  @override
+    void initState() {
+      _getGoodsList();
+      super.initState();
+    }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Text('商品列表'),
+    );
+  }
+  void _getGoodsList() async{
+    var data = {
+      'categoryId':'2c9f6c946cd22d7b016cd73fa6de0038',
+      'categorySubId':"",
+      'page':1
+    };
+
+    await request('getMallGoods',parameters: data).then((val){
+      var data = json.decode(val.data).toString();
+      print('分类商品列表' + data);
+    });
+
   }
 }

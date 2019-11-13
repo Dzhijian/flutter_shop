@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import './pages/index_page.dart';
-void main() => runApp(MyApp());
+import './provider/child_category.dart';
+import 'package:provider/provider.dart';
+
+void main(){
+  var childCategory = ChildCategory();
+  runApp(
+    ChangeNotifierProvider<ChildCategory>.value(
+      value: childCategory,
+      child: MyApp()
+    ),
+  );
+} 
 
 class MyApp extends StatelessWidget {
   @override
