@@ -15,6 +15,7 @@ class ChildCategory with ChangeNotifier{
     
     childCategoryList = [all];
     childCategoryList.addAll(list);
+    // 发送通知
     notifyListeners();
   }
 
