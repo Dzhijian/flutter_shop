@@ -83,7 +83,7 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
         var childList = list[index].bxMallSubDto;
         var categoryId = list[index].mallCategoryId;
         // print('categoryId:${categoryId}');
-        Provider.of<ChildCategory>(context).getChildCategory(childList);
+        Provider.of<ChildCategory>(context).getChildCategory(childList,categoryId);
         _getGoodsList(categoryId:categoryId);
       },
       child: Container(
@@ -107,7 +107,7 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
       setState(() {
               list = category.data;
             });
-      Provider.of<ChildCategory>(context).getChildCategory(list[0].bxMallSubDto);      
+      Provider.of<ChildCategory>(context).getChildCategory(list[0].bxMallSubDto,list[0].mallCategoryId);      
     });
   }
 
@@ -119,7 +119,7 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
       'page':1
     };
 
-    await request('getMallGoods',parameters: data).then((val){
+    request('getMallGoods',parameters: data).then((val){
       var data = json.decode(val.data.toString());
       CategoryGoodsListModel goodList = CategoryGoodsListModel.fromJson(data);
       Provider.of<CategoryGoodsListProvide>(context).getGoodsList(goodList.data);      
@@ -153,25 +153,53 @@ class _RightCategoryNavState extends State<RightCategoryNav> {
         scrollDirection: Axis.horizontal,
         itemCount: childCategory.childCategoryList.length,
         itemBuilder: (context,index){
-          return _rightInkWell(childCategory.childCategoryList[index]);
+          return _rightInkWell(childCategory.childCategoryList[index],index);
         },
       ),
     );
   }
 
-  Widget _rightInkWell(BxMallSubDto item){
+  Widget _rightInkWell(BxMallSubDto item,int index){
+    ChildCategory childCategory = Provider.of<ChildCategory>(context);
 
+    bool isClick = false;
+    isClick = (index == childCategory.childIndex) ? true : false;
     return InkWell(
-      onTap: (){},
+      onTap: (){
+        childCategory.changeChildIndex(index,item.mallSubId);
+        _getGoodsList(item.mallSubId);
+      },
 
       child: Container(
         padding: EdgeInsets.fromLTRB(5.0, 10.0, 5.0, 10.0),
         child: Text(
           item.mallSubName,
-          style: TextStyle(fontSize: ScreenUtil().setSp(28)),
+          style: TextStyle(
+            fontSize: ScreenUtil().setSp(28),
+            color: isClick ? Colors.pink : Colors.black
+            ),
         ),
       ),
     );
+  }
+  void _getGoodsList(String categorySubId) async{
+    var data = {
+      'categoryId':  Provider.of<ChildCategory>(context).categoryId,
+      'categorySubId':categorySubId,
+      'page':1
+    };
+
+    request('getMallGoods',parameters: data).then((val){
+      var data = json.decode(val.data.toString());
+      CategoryGoodsListModel goodList = CategoryGoodsListModel.fromJson(data);
+      if (goodList.data == null){
+        // 如果数据为空 传一个空的数组过去,不然会报错
+        Provider.of<CategoryGoodsListProvide>(context).getGoodsList([]);      
+      }else{
+        Provider.of<CategoryGoodsListProvide>(context).getGoodsList(goodList.data);      
+      }
+    });
+
   }
 }
 
@@ -192,16 +220,21 @@ class _CategoryGoodsListState extends State<CategoryGoodsList> {
   Widget build(BuildContext context) {
 
     CategoryGoodsListProvide goodsListProvide = Provider.of<CategoryGoodsListProvide>(context);
-    return Container(
-      width: ScreenUtil().setWidth(570),
-      height: ScreenUtil().setHeight(980),
-      child: ListView.builder(
-        itemCount: goodsListProvide.goodsList.length,
-        itemBuilder: (context,index){
-          return _listWidget(goodsListProvide.goodsList,index);
-        },
-      ),
-    );
+    if (goodsListProvide.goodsList.length > 0){
+      return Expanded(
+        child: Container(
+          width: ScreenUtil().setWidth(570),
+          child: ListView.builder(
+            itemCount: goodsListProvide.goodsList.length,
+            itemBuilder: (context,index){
+              return _listWidget(goodsListProvide.goodsList,index);
+            },
+          ),
+        ),
+      );
+    }else{
+      return Text('暂时没有数据');
+    }
   }
  
 
